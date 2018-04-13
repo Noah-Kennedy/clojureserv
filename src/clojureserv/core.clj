@@ -3,27 +3,22 @@
            (java.io PrintWriter)
            (java.util Scanner)))
 
-(defn mk-tcp-socket [name address port]
-  (ref
-    (Socket.
-      (InetAddress/getByName address) port)))
+(defn ^Socket mk-tcp-socket [^String address,
+                             ^Integer port]
+  (Socket. (InetAddress/getByName address) port))
 
-(defn connect [socket address]
-  (dosync
-    (alter .connect socket address)))
-
-(defn send-string [socket str]
-  (dosync
-    (->
-      (deref socket)
+(defn ^PrintWriter mk-tcp-writer [^Socket socket]
+  (-> socket
       .getOutputStream
-      PrintWriter.
-      (.println str))))
+      PrintWriter.))
 
-(defn receive-string [socket]
-  (dosync
-    (->
-      (deref socket)
+(defn ^Scanner mk-tcp-reader [^Socket socket]
+  (-> socket
       .getInputStream
-      Scanner.
-      .next)))
+      Scanner.))
+
+(defn write-with-socket-agent [socket-agent,
+                               ^String str]
+  (send-off socket-agent #(-> %
+                              mk-tcp-writer
+                              (.println str))))
