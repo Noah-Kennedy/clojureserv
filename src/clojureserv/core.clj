@@ -1,26 +1,29 @@
 (ns clojureserv.core
-  (:import (java.net Socket)
+  (:import (java.net Socket InetAddress)
            (java.io PrintWriter)
            (java.util Scanner)))
 
-(def tcp-socket (ref Socket.))
+(defn mk-tcp-socket [name address port]
+  (ref
+    (Socket.
+      (InetAddress/getByName address) port)))
 
-(defn connect [address]
+(defn connect [socket address]
   (dosync
-    (.connect tcp-socket address)))
+    (alter .connect socket address)))
 
-(defn send-string [str]
+(defn send-string [socket str]
   (dosync
     (->
-      (deref tcp-socket)
+      (deref socket)
       .getOutputStream
       PrintWriter.
       (.println str))))
 
-(defn receive-string []
+(defn receive-string [socket]
   (dosync
     (->
-      (deref tcp-socket)
+      (deref socket)
       .getInputStream
       Scanner.
       .next)))
