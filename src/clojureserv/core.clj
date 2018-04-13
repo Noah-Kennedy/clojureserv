@@ -3,6 +3,10 @@
            (java.io PrintWriter)
            (java.util Scanner)))
 
+(require 'pyro.printer)
+
+(pyro.printer/swap-stacktrace-engine!)
+
 (defn ^Socket mk-client-socket [^String address,
                              ^Integer port]
   (Socket. (InetAddress/getByName address) port))
@@ -19,17 +23,24 @@
 
 (defn write-with-socket-agent [socket-agent,
                                ^String str]
-  (send-off socket-agent #(-> %
-                              mk-tcp-writer
-                              (.println str))))
-
-(defn ^ServerSocket mk-server-socket [^Integer port]
-  (ServerSocket. port))
+  (send-off socket-agent #(do
+                            (-> %
+                               mk-tcp-writer
+                               (.println str)
+                                .flush)
+                            %)))
 
 (def server
-  (-> (mk-server-socket 2401)
+  (-> (ServerSocket. 2401)
       agent))
 
 (def client
   (-> (mk-client-socket "127.0.0.1" 2401)
       agent))
+
+(send-off server #(.accept %))
+
+(add-watch server :listener1 #(-> %4
+                                  mk-tcp-reader
+                                  .next
+                                  println))
