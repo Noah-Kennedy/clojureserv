@@ -8,8 +8,10 @@
 (pyro.printer/swap-stacktrace-engine!)
 
 (defn ^Socket mk-client-socket [^String address,
-                             ^Integer port]
-  (Socket. (InetAddress/getByName address) port))
+                                ^Integer port]
+  (Socket.
+    (InetAddress/getByName address)
+    port))
 
 (defn ^PrintWriter mk-tcp-writer [^Socket socket]
   (-> socket
@@ -25,8 +27,8 @@
                                ^String str]
   (send-off socket-agent #(do
                             (-> %
-                               mk-tcp-writer
-                               (.println str)
+                                mk-tcp-writer
+                                (.println str)
                                 .flush)
                             %)))
 
@@ -40,7 +42,12 @@
 
 (send-off server #(.accept %))
 
-(add-watch server :listener1 #(-> %4
-                                  mk-tcp-reader
-                                  .next
-                                  println))
+(add-watch server :server-listener-1 #(->> %4
+                                           mk-tcp-reader
+                                           .next
+                                           (.println (mk-tcp-writer %4))))
+
+(add-watch client :client-listener-1 #(-> %4
+                                          mk-tcp-reader
+                                          .next
+                                          println))
