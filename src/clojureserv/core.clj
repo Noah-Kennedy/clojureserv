@@ -22,20 +22,18 @@
 
 (defn write-with-socket-agent [socket-agent,
                                ^String str]
-  (send-off socket-agent #(do
-                            (-> %
-                                mk-tcp-writer
-                                (.println str))
-                            %)))
+  (send-off socket-agent
+            #(do (-> % mk-tcp-writer (.println str)) %)))
 
 (defn print-with-socket-agent [socket-agent]
   (send-off socket-agent
-            #(do
-               (let [reader (mk-tcp-reader %)]
-                 (while (.hasNext reader)
-                   (println (.next reader)))
-                 (println "empty"))
-               %)))
+            ^Socket (fn [^Socket socket]
+                      (do
+                        (let [reader (mk-tcp-reader socket)]
+                          (while (.hasNext reader)
+                            (println (.next reader)))
+                          (println "empty"))
+                        %))))
 
 (defmacro defserver [^Symbol name
                      ^Integer port]
