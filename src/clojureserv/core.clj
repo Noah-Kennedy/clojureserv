@@ -5,20 +5,10 @@
            (clojure.lang Symbol)))
 
 (require 'pyro.printer)
-
 (pyro.printer/swap-stacktrace-engine!)
-
 (set! *warn-on-reflection* true)
-
 (def ^String localhost "127.0.0.1")
-
 (def ^Integer test-port 2401)
-
-(defn ^Socket mk-client-socket [^String address,
-                                ^Integer port]
-  (Socket.
-    (InetAddress/getByName address)
-    port))
 
 (defn ^PrintWriter mk-tcp-writer [^Socket socket]
   (-> socket
@@ -42,28 +32,23 @@
   (send-off socket-agent
             #(do
                (let [reader (mk-tcp-reader %)]
-                 (while (.hasNextLine reader)
+                 (while (.hasNext reader)
                    (println (.next reader)))
                  (println "empty"))
                %)))
 
-(defn mk-server [^Integer port]
-  (-> (ServerSocket. port)
-      agent
-      (send-off
-        (fn [^ServerSocket server-socket]
-          (.accept server-socket)))))
-
-(defn mk-client [^String ipaddress
-                 ^Integer port]
-  (-> (mk-client-socket ipaddress port)
-      agent))
-
 (defmacro defserver [^Symbol name
                      ^Integer port]
-  `(def ~name (mk-server ~port)))
+  `(def ~name (-> (ServerSocket. ~port)
+                  agent
+                  (send-off
+                    (fn [^ServerSocket ~'server-socket]
+                      (.accept ~'server-socket))))))
 
 (defmacro defclient [^Symbol name
                      ^String ipaddress
                      ^Integer port]
-  `(def ~name (mk-client ~ipaddress ~port)))
+  `(def ~name (agent
+                (Socket.
+                  (InetAddress/getByName ~ipaddress)
+                  ~port))))
