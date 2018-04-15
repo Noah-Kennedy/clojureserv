@@ -8,9 +8,11 @@
 
 (pyro.printer/swap-stacktrace-engine!)
 
-(def localhost "127.0.0.1")
+(set! *warn-on-reflection* true)
 
-(def test-port 2401)
+(def ^String localhost "127.0.0.1")
+
+(def ^Integer test-port 2401)
 
 (defn ^Socket mk-client-socket [^String address,
                                 ^Integer port]
@@ -41,17 +43,20 @@
             #(do
                (let [reader (mk-tcp-reader %)]
                  (while (.hasNextLine reader)
-                   (println (.nextLine reader)))
+                   (println (.next reader)))
                  (println "empty"))
                %)))
 
 (defn mk-server [^Integer port]
   (-> (ServerSocket. port)
       agent
-      (send-off #(.accept %))))
+      (send-off
+        (fn [^ServerSocket server-socket]
+          (.accept server-socket)))))
 
-(defn mk-client [^String ipaddress ^Integer port]
-  (-> (mk-client-socket ipaddress 2401)
+(defn mk-client [^String ipaddress
+                 ^Integer port]
+  (-> (mk-client-socket ipaddress port)
       agent))
 
 (defmacro defserver [^Symbol name
