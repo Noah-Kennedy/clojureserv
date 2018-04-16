@@ -33,7 +33,7 @@
                           (while (.hasNext reader)
                             (println (.next reader)))
                           (println "empty"))
-                        %))))
+                        socket))))
 
 (defmacro defserver [^Symbol name
                      ^Integer port]
