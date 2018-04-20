@@ -30,8 +30,8 @@
             ^Socket (fn [^Socket socket]
                       (do
                         (let [reader (mk-tcp-reader socket)]
-                          (while (.hasNext reader)
-                            (println (.next reader)))
+                          (while (.hasNextLine reader)
+                            (println (.nextLine reader)))
                           (println "empty"))
                         socket))))
 
